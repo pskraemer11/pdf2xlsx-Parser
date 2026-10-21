@@ -24,9 +24,8 @@ data/
 # ZIP-Dateien (enthält persönliche Daten und Archive)
 *.zip
 
-# Lokale Backups (alte Entwicklungsstände, Original-Prompts) – nicht veröffentlichen
-backup/
-data/
+# Privater Bereich (Original-Prompts) und Backup-Dateien – nicht veröffentlichen
+privat/
 *.bak
 
 # Lokale Projekt-Memo-Daten (Entscheidungen, Begründungen) – nicht veröffentlichen

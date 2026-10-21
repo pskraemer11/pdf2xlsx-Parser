@@ -1,0 +1,87 @@
+#!/bin/sh
+# pre-push – letzte Schleuse: prüft ALLE neu übertragenen Commits des
+# Push-Bereichs (Identität, Nachricht, Dateiinhalte, Datenpfade).
+# Treffer werden aus Datenschutzgründen nie ausgedruckt.
+. "$(dirname "$0")/lib.sh"
+
+if hook_bypass_aktiv; then
+    echo "⚠ RELEASE_ALLOW=1 – Datenschutz-Prüfungen werden übersprungen." >&2
+    exit 0
+fi
+
+ist_null_sha() {
+    # SHA-1-Feld (40 Nullen) oder SHA-256-Feld (64 Nullen)
+    printf '%s' "$1" | grep -qE '^0+$'
+}
+
+# Fail-Closed-Prinzip: bricht irgendein interner Prüfschritt, wird der Push
+# verweigert – niemals stillschweigend ungeprüft durchgelassen.
+
+while read -r LOKALER_REF LOKALER_SHA REMOTER_REF REMOTER_SHA; do
+    # Defensive Zeilenbereinigung: CRLF-Zufuhr ist unter Windows möglich
+    LOKALER_SHA=$(printf '%s' "$LOKALER_SHA" | tr -d '\r')
+    REMOTER_SHA=$(printf '%s' "$REMOTER_SHA" | tr -d '\r')
+
+    [ -z "$LOKALER_SHA" ] && continue
+
+    if ist_null_sha "$LOKALER_SHA"; then
+        continue  # Löschen eines Remote-Zweigs: nichts wird übertragen
+    fi
+
+    if ist_null_sha "$REMOTER_SHA" || [ -z "$REMOTER_SHA" ]; then
+        # Neuer Remote-Zweig: gesamte lokale Historie wird übertragen
+        NEUE_COMMITS=$(git rev-list "$LOKALER_SHA" 2>/dev/null) || \
+            verweigern "Interner Prüffehler: Push-Bereich konnte nicht ermittelt werden."
+    else
+        NEUE_COMMITS=$(git rev-list "$REMOTER_SHA..$LOKALER_SHA" 2>/dev/null) || \
+            verweigern "Interner Prüffehler: Push-Bereich konnte nicht ermittelt werden."
+    fi
+
+    for SHA in $NEUE_COMMITS; do
+        KURZ=$(printf '%s' "$SHA" | cut -c1-7)
+
+        git cat-file -t "$SHA" >/dev/null 2>&1 || \
+            verweigern "Interner Prüffehler in $KURZ (Objekt nicht lesbar)."
+
+        if git log -1 --format='%an <%ae>' "$SHA" | grep -Eiq "$MUSTER_DOMAINS"; then
+            verweigern "Autor-Identität im Commit $KURZ enthält eine gesperrte Domain."
+        fi
+        if git log -1 --format='%cn <%ce>' "$SHA" | grep -Eiq "$MUSTER_DOMAINS"; then
+            verweigern "Committer-Identität im Commit $KURZ enthält eine gesperrte Domain."
+        fi
+        if git log -1 --format=%B "$SHA" | grep -Eiq "$MUSTER_DOMAINS"; then
+            verweigern "Commit-Nachricht in $KURZ enthält eine gesperrte Domain."
+        fi
+        if git log -1 --format=%B "$SHA" | grep -Eiq "$MUSTER_BANK"; then
+            verweigern "Commit-Nachricht in $KURZ enthält die Bank-Kennung."
+        fi
+
+        BAUM=$(git ls-tree -r --name-only "$SHA" 2>/dev/null) || \
+            verweigern "Interner Prüffehler in $KURZ (Dateiliste nicht lesbar)."
+        if printf '%s' "$BAUM" | grep -Eq "$MUSTER_DATEN"; then
+            verweigern "Commit $KURZ enthält persönliche Daten (data/, privat/ oder geschützte Dateitypen)."
+        fi
+
+        # Dateiinhalte; die Hook-Quelle definiert die Muster selbst und ist ausgenommen.
+        # exit 0 = Treffer, exit 1 = kein Treffer, sonst interner Prüffehler.
+        git grep -q -i -E "$MUSTER_DOMAINS" "$SHA" -- . ':(exclude).githooks' >/dev/null 2>&1
+        STATUS=$?
+        if [ "$STATUS" -eq 0 ]; then
+            verweigern "Dateiinhalte im Commit $KURZ enthalten eine gesperrte Domain."
+        fi
+        if [ "$STATUS" -ne 1 ]; then
+            verweigern "Interner Prüffehler in $KURZ (Inhaltssuche)."
+        fi
+
+        git grep -q -i -E "$MUSTER_BANK" "$SHA" -- . ':(exclude).githooks' >/dev/null 2>&1
+        STATUS=$?
+        if [ "$STATUS" -eq 0 ]; then
+            verweigern "Dateiinhalte im Commit $KURZ enthalten die Bank-Kennung."
+        fi
+        if [ "$STATUS" -ne 1 ]; then
+            verweigern "Interner Prüffehler in $KURZ (Inhaltssuche)."
+        fi
+    done
+done
+
+exit 0

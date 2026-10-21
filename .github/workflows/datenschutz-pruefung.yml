@@ -1,0 +1,51 @@
+name: Datenschutz-Pruefung
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  privacy:
+    name: Hook-Regeln für neue Commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout mit voller Historie
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push-Bereich bestimmen
+        id: bereich
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_VORHER: ${{ github.event.before }}
+          PUSH_NACHHER: ${{ github.sha }}
+          PR_VORHER: ${{ github.event.pull_request.base.sha }}
+          PR_NACHHER: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "vorher=$PUSH_VORHER" >> "$GITHUB_OUTPUT"
+            echo "nachher=$PUSH_NACHHER" >> "$GITHUB_OUTPUT"
+          else
+            echo "vorher=$PR_VORHER" >> "$GITHUB_OUTPUT"
+            echo "nachher=$PR_NACHHER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gemeinsame Hook-Regeln über neue Commits ausführen
+        env:
+          VORHER: ${{ steps.bereich.outputs.vorher }}
+          NACHHER: ${{ steps.bereich.outputs.nachher }}
+        run: |
+          set -e
+          if git cat-file -e "$VORHER^{commit}" 2>/dev/null; then
+            EINGABE="refs/heads/ci $NACHHER refs/heads/ci-remote $VORHER"
+          else
+            # Force-Push oder fehlende Base: kompletten Zweig prüfen (fail-closed)
+            echo "::warning::Vorher-SHA nicht in der Historie – prüfe den kompletten Zweig."
+            EINGABE="refs/heads/ci $NACHHER refs/heads/ci-remote 0000000000000000000000000000000000000000"
+          fi
+          printf '%s\n' "$EINGABE" | sh .githooks/pre-push
+          echo "✅ Datenschutzregeln bestätigt (geprüfter Bereich endet bei $NACHHER)."

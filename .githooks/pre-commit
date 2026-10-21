@@ -1,0 +1,34 @@
+#!/bin/sh
+# pre-commit – verhindert früh, was pre-push sonst stoppen würde:
+# 1) Identität, 2) hinzugefügte Textzeilen, 3) persönliche Dateien im Staging.
+. "$(dirname "$0")/lib.sh"
+
+if hook_bypass_aktiv; then
+    echo "⚠ RELEASE_ALLOW=1 – Datenschutz-Prüfungen werden übersprungen." >&2
+    exit 0
+fi
+
+# 1) Autor- und Committer-Identität
+if git var GIT_AUTHOR_IDENT 2>/dev/null | grep -Eiq "$MUSTER_DOMAINS"; then
+    verweigern "Autor-Identität enthält eine gesperrte Domain."
+fi
+if git var GIT_COMMITTER_IDENT 2>/dev/null | grep -Eiq "$MUSTER_DOMAINS"; then
+    verweigern "Committer-Identität enthält eine gesperrte Domain."
+fi
+
+# 2) Hinzugefügte/zu übernehmende Textzeilen (Hook-Quelle nimmt sich selbst aus,
+#    weil sie die Muster als Konfiguration enthält)
+GIT_DIFF=$(git diff --cached -U0 -- . ':(exclude).githooks' 2>/dev/null)
+if printf '%s' "$GIT_DIFF" | grep -Eiq "$MUSTER_DOMAINS"; then
+    verweigern "Staging enthält eine gesperrte Domain in Textzeilen."
+fi
+if printf '%s' "$GIT_DIFF" | grep -Eiq "$MUSTER_BANK"; then
+    verweigern "Staging enthält die Bank-Kennung in Textzeilen."
+fi
+
+# 3) Keine persönlichen Dateien im Staging (data/-Ordner bzw. geschützte Endungen)
+if git diff --cached --name-only 2>/dev/null | grep -Eq "$MUSTER_DATEN"; then
+    verweigern "Staging enthält persönliche Daten (data/, privat/ oder geschützte Dateitypen)."
+fi
+
+exit 0

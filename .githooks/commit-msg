@@ -1,0 +1,19 @@
+#!/bin/sh
+# commit-msg – Commit-Nachricht ohne gesperrte Muster (Treffer nie ausgedruckt).
+. "$(dirname "$0")/lib.sh"
+
+if hook_bypass_aktiv; then
+    echo "⚠ RELEASE_ALLOW=1 – Datenschutz-Prüfungen werden übersprungen." >&2
+    exit 0
+fi
+
+NACHRICHT_DATEI="$1"
+if [ -z "$NACHRICHT_DATEI" ] || [ ! -f "$NACHRICHT_DATEI" ]; then
+    echo "❌ commit-msg: Nachrichten-Datei fehlt (unerwarteter Aufruf)." >&2
+    exit 1
+fi
+
+grep -Eiq "$MUSTER_DOMAINS" "$NACHRICHT_DATEI" && verweigern "Commit-Nachricht enthält eine gesperrte Domain."
+grep -Eiq "$MUSTER_BANK" "$NACHRICHT_DATEI" && verweigern "Commit-Nachricht enthält die Bank-Kennung."
+
+exit 0

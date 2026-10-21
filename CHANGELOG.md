@@ -4,6 +4,16 @@ Alle nennenswerten Änderungen des Projekts werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Added
+- Git-Hook-Datenschutzschleuse unter `.githooks/` (`pre-commit`, `commit-msg`, `pre-push`; gemeinsame Regelquelle `lib.sh`): gesperrte E-Mail-Domains, persönliche Datenpfade (data/, privat/) und die Bank-Kennung werden nie Teil eines Commits oder Pushes; Diagnosen drucken gefundene Werte nie aus
+- GitHub-Actions-Workflow `.github/workflows/datenschutz-pruefung.yml`, der dieselben Hook-Regeln auf der GitHub-Seite für alle neuen Commits ausführt
+- Hook-README mit Installations- und Notfallregel (dokumentierter Bypass `RELEASE_ALLOW=1`)
+
+### Changed
+- Privater Ordner heißt jetzt `privat/` (davor `docs/`, zuvor `backup/`) — eindeutiger Name, damit die Konvention "docs/ = öffentliche Projektdoku" frei bleibt; `.gitignore` und Hook-Regeln synchron angepasst
+
 ## [1.0.0] – 2026-10-21
 
 ### Added
