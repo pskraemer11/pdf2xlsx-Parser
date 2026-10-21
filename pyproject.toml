@@ -1,0 +1,26 @@
+# Zentrale Projekt- und Toolkonfiguration.
+
+# Hinweis: Bewusst KEIN installierbares Paket (kein [build-system]) –
+# das Skript wird direkt mit Python ausgeführt:
+#     python pdf2xlsx-Parser.py <pdf-ordner>
+# Die Abhängigkeiten werden mit "pip install pdfplumber openpyxl" installiert.
+
+[project]
+name = "pdf2xlsx-parser"
+version = "1.0.0"
+description = "Extrahiert Kontobewegungen aus PDF-Kontoauszügen und speichert sie als Excel-Datei"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "pskraemer11" }]
+keywords = ["pdf", "xlsx", "excel", "bank-statement", "kontoauszug", "parser"]
+dependencies = [
+    "pdfplumber>=0.10",
+    "openpyxl>=3.1",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

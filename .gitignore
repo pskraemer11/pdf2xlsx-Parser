@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Tool- und Test-Caches
+.ruff_cache/
+.pytest_cache/
+
+# Lokale Testdaten (persönliche Daten) – auch deren Ausgabedateien bleiben privat
+data/
+
+# Excel-Dateien (enthält persönliche Daten)
+*.xlsx
+*.ods
+*.csv
+
+# PDF-Dateien (enthält persönliche Daten)
+*.pdf
+
+# Textdateien (enthält persönliche Daten)
+*.txt
+
+# ZIP-Dateien (enthält persönliche Daten und Archive)
+*.zip
+
+# Lokale Backups (alte Entwicklungsstände, Original-Prompts) – nicht veröffentlichen
+backup/
+data/
+*.bak
+
+# Lokale Projekt-Memo-Daten (Entscheidungen, Begründungen) – nicht veröffentlichen
+COMPACTIONS.md
