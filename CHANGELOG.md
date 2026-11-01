@@ -10,6 +10,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - Git-Hook-Datenschutzschleuse unter `.githooks/` (`pre-commit`, `commit-msg`, `pre-push`; gemeinsame Regelquelle `lib.sh`): gesperrte E-Mail-Domains, persönliche Datenpfade (data/, privat/) und die Bank-Kennung werden nie Teil eines Commits oder Pushes; Diagnosen drucken gefundene Werte nie aus
 - GitHub-Actions-Workflow `.github/workflows/datenschutz-pruefung.yml`, der dieselben Hook-Regeln auf der GitHub-Seite für alle neuen Commits ausführt
 - Hook-README mit Installations- und Notfallregel (dokumentierter Bypass `RELEASE_ALLOW=1`)
+- GitHub-Actions-Workflow `.github/workflows/actionlint.yml`, der die Workflow-Dateien selbst statisch prüft (Syntax, Ausdruckskontexte, Action-Inputs) über das offizielle Image `rhysd/actionlint:1.7.12` samt shellcheck und pyflakes
 
 ### Changed
 - Privater Ordner heißt jetzt `privat/` (davor `docs/`, zuvor `backup/`) — eindeutiger Name, damit die Konvention "docs/ = öffentliche Projektdoku" frei bleibt; `.gitignore` und Hook-Regeln synchron angepasst
