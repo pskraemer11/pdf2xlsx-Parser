@@ -13,6 +13,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - GitHub-Actions-Workflow `.github/workflows/actionlint.yml`, der die Workflow-Dateien selbst statisch prüft (Syntax, Ausdruckskontexte, Action-Inputs) über das offizielle Image `rhysd/actionlint:1.7.12` samt shellcheck und pyflakes
 
 ### Changed
+- **Agentenregeln (06.11.2026):** `AGENTS.md` neu angelegt und auf Aufruf, Tests, Ruff und die Datenschutz-Schleuse reduziert. Allgemeine Arbeits-, Datenschutz- und Git-Regeln stehen in `$HOME/AGENTS.md`.
 - Privater Ordner heißt jetzt `privat/` (davor `docs/`, zuvor `backup/`) — eindeutiger Name, damit die Konvention "docs/ = öffentliche Projektdoku" frei bleibt; `.gitignore` und Hook-Regeln synchron angepasst
 
 ## [1.0.0] – 2026-10-21
