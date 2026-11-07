@@ -23,12 +23,22 @@ dependencies = [
 line-length = 100
 
 [tool.ruff.lint]
-# Vollständige, projekteigene Regelauswahl. Ohne diesen Block würde eine
+# Projekteigene Regelauswahl in drei Stufen. Ohne diesen Block würde eine
 # globale RUFF_CONFIG (select = ["ALL"]) den Prüfumfang dieses Projekts
-# verändern und den Pre-Push-Hook unabhaengig von der Projektkonfiguration
+# verändern und den Pre-Push-Hook unabhängig von der Projektkonfiguration
 # scheitern lassen.
-select = ["E4", "E7", "E9", "F"]
-ignore = []
+select = [
+    # Stufe 1 - Korrektheit: Syntax-, Namens- und Importfehler.
+    "E4", "E7", "E9", "F",
+    # Stufe 2 - Struktur und moderne Python-Nutzung.
+    "I", "UP", "SIM", "PTH", "RUF",
+    # Stufe 3 - Robustheit und Sicherheit.
+    "B", "BLE", "TRY", "S", "DTZ",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests dürfen assert verwenden; im Anwendungscode bleibt S101 aktiv.
+"tests/*" = ["S101"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

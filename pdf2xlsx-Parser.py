@@ -18,15 +18,14 @@ Lizenz: GPL-3.0
 
 import argparse
 import fnmatch
-import os
 import re
 import sys
 from datetime import date, datetime
+from pathlib import Path
 
 import openpyxl
-from openpyxl.styles import Font
 import pdfplumber
-
+from openpyxl.styles import Font
 
 # ============================================================================
 # KONFIGURATION (anpassbar)
@@ -94,7 +93,11 @@ def finde_pdf_dateien(ordner: str, muster: str) -> list[str]:
     if "*" not in muster:
         muster = muster + "*"
 
-    gefundene = [f for f in os.listdir(ordner) if fnmatch.fnmatch(f, muster) and f.endswith(".pdf")]
+    gefundene = [
+        datei.name
+        for datei in Path(ordner).iterdir()
+        if datei.is_file() and fnmatch.fnmatch(datei.name, muster) and datei.name.endswith(".pdf")
+    ]
 
     return sorted(gefundene)
 
@@ -126,12 +129,9 @@ def extrahiere_seite(text: str, seiten_nummer: int) -> list[tuple[date, str, flo
             if i + 1 < len(zeilen):
                 naechste_zeile = zeilen[i + 1]
 
-            if VALUTA_MARKER in naechste_zeile:
-                # Reine "Valuta"-Zeile → auch dieser Blockkopf wird übersprungen
-                start_index = i + 2
-            else:
-                # Erste Buchung steht direkt unter der Überschrift
-                start_index = i + 1
+            # Reine "Valuta"-Zeile → Blockkopf überspringen, sonst beginnt die
+            # erste Buchung direkt unter der Überschrift.
+            start_index = i + 2 if VALUTA_MARKER in naechste_zeile else i + 1
             print(f"   → Seite {seiten_nummer}: Spaltenüberschrift in Zeile {i + 1} gefunden.")
             break
 
@@ -195,11 +195,12 @@ def verarbeite_zeile(zeile: str) -> tuple[date, str, float] | None:
 
     if not match:
         # Typischer Fall hier: Valuta-Zeile mit Zweck-Fortführung (kein Betrag
-        # am Zeilenende) – keine Buchung, wird vom Aufrufer ignoriert.
+        # am Zeilenende) - keine Buchung, wird vom Aufrufer ignoriert.
         return None
 
-    # Datum echt konvertieren ("01.03.2023" → date-Objekt)
-    datum = datetime.strptime(match.group(1), "%d.%m.%Y").date()
+    # Datum echt konvertieren ("01.03.2023" → date-Objekt). Kontoauszugsdaten
+    # sind reine Kalenderdaten ohne Uhrzeit und Zeitzone.
+    datum = datetime.strptime(match.group(1), "%d.%m.%Y").date()  # noqa: DTZ007
     verwendungszweck = match.group(2).strip()
 
     # Betrag umwandeln: "1.234,56" → 1234.56 (Punkt entfernt, Komma → Punkt, zu Float konvertieren)
@@ -208,7 +209,7 @@ def verarbeite_zeile(zeile: str) -> tuple[date, str, float] | None:
     return datum, verwendungszweck, betrag
 
 
-def speichere_excel(daten: list[tuple[date, str, float]], ausgabe_datei: str) -> None:
+def speichere_excel(daten: list[tuple[date, str, float]], ausgabe_datei: str | Path) -> None:
     """
     Speichert die extrahierten Buchungsdaten in einer Excel-Datei.
 
@@ -280,15 +281,13 @@ def main() -> None:
     args = parser.parse_args()
 
     # Ordner prüfen
-    if not os.path.isdir(args.ordner):
+    ordner = Path(args.ordner)
+    if not ordner.is_dir():
         print(f"❌ Fehler: Ordner '{args.ordner}' existiert nicht.")
         sys.exit(1)
 
     # Ausgabedatei bestimmen
-    if args.output:
-        ausgabe_datei = os.path.abspath(args.output)
-    else:
-        ausgabe_datei = os.path.join(args.ordner, DEFAULT_OUTPUT_FILENAME)
+    ausgabe_datei = Path(args.output).resolve() if args.output else ordner / DEFAULT_OUTPUT_FILENAME
 
     print("=" * 60)
     print("  Kontoauszug-Parser")
@@ -299,7 +298,7 @@ def main() -> None:
     print("=" * 60)
 
     # --- PDF-Dateien suchen ---
-    pdf_dateien = finde_pdf_dateien(args.ordner, args.prefix)
+    pdf_dateien = finde_pdf_dateien(str(ordner), args.prefix)
 
     if not pdf_dateien:
         print(f"\n⚠️  Keine PDF-Dateien mit Muster '{args.prefix}' gefunden.")
@@ -311,7 +310,7 @@ def main() -> None:
     alle_buchungen: list[tuple[date, str, float]] = []
 
     for i, dateiname in enumerate(pdf_dateien, 1):
-        dateipfad = os.path.join(args.ordner, dateiname)
+        dateipfad = ordner / dateiname
         print(f"🔍 [{i}/{len(pdf_dateien)}] Verarbeite: {dateiname}")
 
         try:
@@ -324,7 +323,7 @@ def main() -> None:
 
                     buchungen = extrahiere_seite(text, seiten_nummer)
                     alle_buchungen.extend(buchungen)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - eine defekte PDF darf den Batch nicht abbrechen
             print(f"   ⚠️  Fehler beim Lesen von {dateiname}: {e}")
             continue
 

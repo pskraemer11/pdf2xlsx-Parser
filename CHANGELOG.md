@@ -14,9 +14,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Changed
 - **Pre-Push-Gate (07.11.2026):** `pre-push` führt nach den Datenschutzprüfungen die 19 Unit-Tests (`python -m unittest discover -s tests -v`) und Ruff (`python -m ruff check .`) aus; beide blockieren den Push bei Fehlern.
-- **Ruff-Policy (07.11.2026):** `pyproject.toml` pinnt `select = ["E4", "E7", "E9", "F"]` und `ignore = []`. Damit hängt der Prüfumfang nicht mehr von einer globalen `RUFF_CONFIG` mit `select = ["ALL"]` ab.
+- **Ruff-Policy (07.11.2026):** `pyproject.toml` aktiviert eine dreistufige Regelauswahl: Korrektheit (`E4`, `E7`, `E9`, `F`), Struktur und moderne Python-Nutzung (`I`, `UP`, `SIM`, `PTH`, `RUF`) sowie Robustheit und Sicherheit (`B`, `BLE`, `TRY`, `S`, `DTZ`). `S101` ist nur für `tests/*` ausgenommen; im Anwendungscode bleibt die Regel aktiv. Damit hängt der Prüfumfang nicht mehr von einer globalen `RUFF_CONFIG` mit `select = ["ALL"]` ab.
 - **Agentenregeln (06.11.2026):** `AGENTS.md` neu angelegt und auf Aufruf, Tests, Ruff und die Datenschutz-Schleuse reduziert. Allgemeine Arbeits-, Datenschutz- und Git-Regeln stehen in `$HOME/AGENTS.md`.
 - Privater Ordner heißt jetzt `privat/` (davor `docs/`, zuvor `backup/`) — eindeutiger Name, damit die Konvention "docs/ = öffentliche Projektdoku" frei bleibt; `.gitignore` und Hook-Regeln synchron angepasst
+
+### Fixed
+- **Ruff-Befunde (07.11.2026):** Alle 12 Befunde der dreistufigen Auswahl behoben: Importreihenfolge, `pathlib` statt `os.path`, Ternary statt `if`/`else`, eindeutige Kommentar- und Docstring-Zeichen. `DTZ007` ist an der Datumskonvertierung eng begründet (reine Kalenderdaten ohne Zeitzone), `BLE001` an der PDF-Batch-Grenze (eine defekte Datei darf den Lauf nicht abbrechen); beide Ausnahmen stehen im Code, nicht global in der Konfiguration.
+- **Verifikation (07.11.2026):** `python -m ruff check .` und `python -m ruff format --check .` ohne Befunde; alle 19 Unit-Tests bestanden.
 
 ## [1.0.0] – 2026-10-21
 

@@ -1,4 +1,4 @@
-"""Unit-Tests für die Parser-Funktionen – ohne echte PDFs (nur synthetische Texte).
+"""Unit-Tests für die Parser-Funktionen - ohne echte PDFs (nur synthetische Texte).
 
 Ausführen:
     python -m unittest discover -s tests -v
@@ -71,7 +71,7 @@ class SeitenTests(unittest.TestCase):
 
     Semantik (Layout der Auszüge): Nur die erste Blockzeile hat den Betrag in
     der rechten Spalte. Alle übrigen Blockzeilen (Valuta-Datum, Zweck-Fortführung)
-    werden ignoriert, ohne als Fehler zu gelten – pdfplumber liefert zwischen
+    werden ignoriert, ohne als Fehler zu gelten - pdfplumber liefert zwischen
     den Blöcken keine Leerzeilen.
     """
 
