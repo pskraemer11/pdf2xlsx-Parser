@@ -22,5 +22,13 @@ dependencies = [
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.lint]
+# Vollständige, projekteigene Regelauswahl. Ohne diesen Block würde eine
+# globale RUFF_CONFIG (select = ["ALL"]) den Prüfumfang dieses Projekts
+# verändern und den Pre-Push-Hook unabhaengig von der Projektkonfiguration
+# scheitern lassen.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

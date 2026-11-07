@@ -13,6 +13,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - GitHub-Actions-Workflow `.github/workflows/actionlint.yml`, der die Workflow-Dateien selbst statisch prüft (Syntax, Ausdruckskontexte, Action-Inputs) über das offizielle Image `rhysd/actionlint:1.7.12` samt shellcheck und pyflakes
 
 ### Changed
+- **Pre-Push-Gate (07.11.2026):** `pre-push` führt nach den Datenschutzprüfungen die 19 Unit-Tests (`python -m unittest discover -s tests -v`) und Ruff (`python -m ruff check .`) aus; beide blockieren den Push bei Fehlern.
+- **Ruff-Policy (07.11.2026):** `pyproject.toml` pinnt `select = ["E4", "E7", "E9", "F"]` und `ignore = []`. Damit hängt der Prüfumfang nicht mehr von einer globalen `RUFF_CONFIG` mit `select = ["ALL"]` ab.
 - **Agentenregeln (06.11.2026):** `AGENTS.md` neu angelegt und auf Aufruf, Tests, Ruff und die Datenschutz-Schleuse reduziert. Allgemeine Arbeits-, Datenschutz- und Git-Regeln stehen in `$HOME/AGENTS.md`.
 - Privater Ordner heißt jetzt `privat/` (davor `docs/`, zuvor `backup/`) — eindeutiger Name, damit die Konvention "docs/ = öffentliche Projektdoku" frei bleibt; `.gitignore` und Hook-Regeln synchron angepasst
 

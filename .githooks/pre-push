@@ -84,4 +84,25 @@ while read -r LOKALER_REF LOKALER_SHA REMOTER_REF REMOTER_SHA; do
     done
 done
 
+# Test- und Lint-Schleuse: läuft einmal pro Push, nach den Datenschutzprüfungen.
+# Der Interpreter ist über PYTHON_BIN austauschbar; fehlt er, wird der Push
+# fail-closed verweigert.
+PYTHON_BIN=${PYTHON_BIN:-python}
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    echo "❌ Python-Interpreter '$PYTHON_BIN' nicht gefunden." >&2
+    exit 1
+fi
+
+echo "Test-Gate: $PYTHON_BIN -m unittest discover -s tests -v" >&2
+if ! "$PYTHON_BIN" -m unittest discover -s tests -v; then
+    echo "❌ Unit-Tests sind fehlgeschlagen." >&2
+    exit 1
+fi
+
+echo "Lint-Gate: $PYTHON_BIN -m ruff check ." >&2
+if ! "$PYTHON_BIN" -m ruff check .; then
+    echo "❌ Ruff hat Befunde gemeldet." >&2
+    exit 1
+fi
+
 exit 0
