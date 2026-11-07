@@ -11,6 +11,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - GitHub-Actions-Workflow `.github/workflows/datenschutz-pruefung.yml`, der dieselben Hook-Regeln auf der GitHub-Seite für alle neuen Commits ausführt
 - Hook-README mit Installations- und Notfallregel (dokumentierter Bypass `RELEASE_ALLOW=1`)
 - GitHub-Actions-Workflow `.github/workflows/actionlint.yml`, der die Workflow-Dateien selbst statisch prüft (Syntax, Ausdruckskontexte, Action-Inputs) über das offizielle Image `rhysd/actionlint:1.7.12` samt shellcheck und pyflakes
+- **ADR-0001 (07.11.2026):** Die dreistufige Ruff-Policy ist unter `docs/adr/0001-ruff-regeln-projektlokal-in-drei-stufen.md` mit Alternativen und Folgen begründet; `AGENTS.md` verweist auf den ADR-Ort und die Kriterien.
 
 ### Changed
 - **Pre-Push-Gate (07.11.2026):** `pre-push` führt nach den Datenschutzprüfungen die 19 Unit-Tests (`python -m unittest discover -s tests -v`) und Ruff (`python -m ruff check .`) aus; beide blockieren den Push bei Fehlern.
