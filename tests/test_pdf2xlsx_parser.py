@@ -255,5 +255,59 @@ class ExcelTests(unittest.TestCase):
             self.assertTrue(tabelle["A1"].font.bold)
 
 
+class FormelInjectionTests(unittest.TestCase):
+    """Verwendungszweck darf nicht als Formel in der XLSX landen."""
+
+    def test_fuehrende_formelzeichen_werden_ausgeschrieben(self):
+        faelle = {
+            "=1+1": "Gleichheitszeichen 1+1",
+            "+1": "Pluszeichen 1",
+            "-1": "Minuszeichen 1",
+            "@SUM(A1:A2)": "At-Zeichen SUM(A1:A2)",
+            "\tText": "Tabulator Text",
+            "\rText": "Wagenrücklauf Text",
+        }
+        for eingabe, erwartet in faelle.items():
+            with self.subTest(eingabe=eingabe):
+                self.assertEqual(modul.neutralisiere_formelzeichen(eingabe), erwartet)
+
+    def test_normaler_verwendungszweck_bleibt_unveraendert(self):
+        self.assertEqual(
+            modul.neutralisiere_formelzeichen("Dauerauftrag Strom"),
+            "Dauerauftrag Strom",
+        )
+
+    def test_excel_schreibt_verwendungszweck_als_textzelle(self):
+        daten = [
+            (date(2023, 3, 1), "=1+1", 300.0),
+            (date(2023, 3, 2), "+2", 1.0),
+            (date(2023, 3, 3), "-3", -1.0),
+            (date(2023, 3, 4), "@SUM(A1:A2)", 2.0),
+            (date(2023, 3, 5), "\tText", 3.0),
+            (date(2023, 3, 6), "\rText", 4.0),
+            (date(2023, 3, 7), "Normal", 5.0),
+        ]
+        erwartete_werte = [
+            "Gleichheitszeichen 1+1",
+            "Pluszeichen 2",
+            "Minuszeichen 3",
+            "At-Zeichen SUM(A1:A2)",
+            "Tabulator Text",
+            "Wagenrücklauf Text",
+            "Normal",
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            ausgabe = Path(tmp) / "ergebnis.xlsx"
+            modul.speichere_excel(daten, str(ausgabe))
+
+            arbeitsbuch = openpyxl.load_workbook(ausgabe)
+            tabelle = arbeitsbuch["Buchungen"]
+            for zeile, erwartet in enumerate(erwartete_werte, start=2):
+                with self.subTest(zeile=zeile):
+                    zelle = tabelle.cell(row=zeile, column=2)
+                    self.assertEqual(zelle.value, erwartet)
+                    self.assertEqual(zelle.data_type, "s")
+
+
 if __name__ == "__main__":
     unittest.main()

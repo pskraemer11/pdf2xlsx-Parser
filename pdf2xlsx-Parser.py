@@ -69,10 +69,42 @@ DATUM_ANFANG_REGEX = re.compile(r"^\d{2}\.\d{2}\.\d{4}")
 # zonder Betrag - solche Zeilen sind KEINE Buchungen und werden ignoriert.
 DATUM_ALLEIN_REGEX = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
 
+# Führende Zeichen, die Tabellenkalkulationen als Formel interpretieren können.
+# Sie werden im Verwendungszweck durch ausgeschriebene Wörter ersetzt.
+FORMELZEICHEN_WOERTER = {
+    "=": "Gleichheitszeichen",
+    "+": "Pluszeichen",
+    "-": "Minuszeichen",
+    "@": "At-Zeichen",
+    "\t": "Tabulator",
+    "\r": "Wagenrücklauf",
+}
+
 
 # ============================================================================
 # HILFSFUNKTIONEN
 # ============================================================================
+
+
+def neutralisiere_formelzeichen(text: str) -> str:
+    """
+    Ersetzt ein führendes Formelzeichen durch das ausgeschriebene Wort.
+
+    Tabellenkalkulationen können Zellen, die mit "=", "+", "-" oder "@"
+    beginnen, als Formel interpretieren. Durch das ausgeschriebene Wort bleibt
+    der Verwendungszweck reiner Text.
+
+    Args:
+        text: Der zu prüfende Verwendungszweck
+
+    Returns:
+        Der Verwendungszweck ohne führendes Formelzeichen
+    """
+    if not text:
+        return text
+
+    ersatz = FORMELZEICHEN_WOERTER.get(text[0])
+    return f"{ersatz} {text[1:]}" if ersatz is not None else text
 
 
 def finde_pdf_dateien(ordner: str, muster: str) -> list[str]:
@@ -235,9 +267,14 @@ def speichere_excel(daten: list[tuple[date, str, float]], ausgabe_datei: str | P
 
     # --- Buchungsdaten schreiben (mit echten Excel-Typen und Formatangeben) ---
     for datum, verwendungszweck, betrag in daten:
+        verwendungszweck = neutralisiere_formelzeichen(verwendungszweck)
         tabelle.append([datum, verwendungszweck, betrag])
 
         aktuelle_zeile = tabelle.max_row
+        # Verwendungszweck explizit als Textzelle führen, damit openpyxl
+        # keinen Formeltyp ableitet.
+        textzelle = tabelle.cell(row=aktuelle_zeile, column=2)
+        textzelle.data_type = "s"
         datumszelle = tabelle.cell(row=aktuelle_zeile, column=1)
         datumszelle.number_format = "DD.MM.YYYY"
         betragzelle = tabelle.cell(row=aktuelle_zeile, column=3)
