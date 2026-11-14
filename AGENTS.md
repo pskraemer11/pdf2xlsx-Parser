@@ -18,6 +18,7 @@ Stand: 07.11.2026
 ## Datenschutz-Schleuse
 
 - Die verbindlichen Regeln stehen in `.githooks/lib.sh`; Aktivierung mit `git config core.hooksPath .githooks`.
+- Hook-Skripte und Gate-Konfigurationen müssen LF haben; nach Werkzeugläufen `grep` auf CR prüfen.
 - `pre-commit` prüft Identität, neue Textzeilen und persönliche Dateipfade im Staging.
 - `commit-msg` prüft die Commit-Nachricht; `pre-push` prüft alle neuen Commits, Dateiinhalte und Datenpfade.
 - Nach den Datenschutzprüfungen führt `pre-push` zusätzlich die Unit-Tests (`python -m unittest discover -s tests -v`) und Ruff (`python -m ruff check .`) aus; beide blockieren den Push bei Fehlern.
