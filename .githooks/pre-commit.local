@@ -1,0 +1,12 @@
+# Projektspezifische Datenschutzpruefungen fuer pdf2xlsx-Parser.
+# Laeuft nach den gemeinsamen Pruefungen und vor dem Test-Gate.
+# Kein RELEASE_ALLOW: diese Pruefungen werden nie uebersprungen.
+. .githooks/lib.sh || exit 1
+
+GIT_DIFF=$(git diff --cached -U0 -- . ':(exclude).githooks' 2>/dev/null)
+if printf '%s' "$GIT_DIFF" | grep -Eiq "$MUSTER_BANK"; then
+  verweigern "Staging enthaelt die Bank-Kennung in Textzeilen."
+fi
+if git diff --cached --name-only 2>/dev/null | grep -Eq "$MUSTER_DATEN"; then
+  verweigern "Staging enthaelt persoenliche Daten (data/, privat/ oder geschuetzte Dateitypen)."
+fi
